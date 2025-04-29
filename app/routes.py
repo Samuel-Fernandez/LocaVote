@@ -1,0 +1,11 @@
+from flask import Blueprint, render_template
+
+main = Blueprint('main', __name__)
+
+@main.route('/')
+def home():
+    return "Hello World"
+
+@main.route('/about')
+def about():
+    return "About"
