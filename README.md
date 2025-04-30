@@ -1,2 +1,2 @@
 # LocaVote
-Little Website that allows to share votes and get average on things from local website
+A small local website created for Eurovision, allowing you to vote for the countries you liked the most (just a little tradition of mine, no judgment please lmao).
