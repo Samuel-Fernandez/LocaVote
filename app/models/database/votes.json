@@ -1,0 +1,47 @@
+[
+    {
+        "user_id": 2,
+        "country_id": 6,
+        "vote": 16
+    },
+    {
+        "user_id": 1,
+        "country_id": 6,
+        "vote": 4
+    },
+    {
+        "user_id": 1,
+        "country_id": 14,
+        "vote": 19
+    },
+    {
+        "user_id": 2,
+        "country_id": 14,
+        "vote": 17
+    },
+    {
+        "user_id": null,
+        "country_id": 3,
+        "vote": 16
+    },
+    {
+        "user_id": 2,
+        "country_id": 4,
+        "vote": 14
+    },
+    {
+        "user_id": 2,
+        "country_id": 11,
+        "vote": 15
+    },
+    {
+        "user_id": 1,
+        "country_id": 11,
+        "vote": 20
+    },
+    {
+        "user_id": 1,
+        "country_id": 35,
+        "vote": 20
+    }
+]

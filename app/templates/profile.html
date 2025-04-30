@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h2 style="text-align:center;">Profile Selection</h2>
+    
+    <div class="profiles-container">
+        {% for user in users %}
+            <div class="profile-card" data-user-id="{{ user.id }}">
+                <a href="{{ url_for('main.select_user', user_id=user.id) }}">
+                    <h3>{{ user.name }}</h3>
+                </a>
+            </div>
+        {% endfor %}
+
+        <div class="profile-card add-user-card">
+            <form action="{{ url_for('main.profile') }}" method="POST" style="display: flex; align-items: center; gap: 5px;">
+                <input type="text" name="new_user" placeholder="Add a user" required style="flex: 1; padding: 5px;">
+                <button type="submit" style="padding: 5px 10px;">+</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        async function checkActiveUsers() {
+            try {
+                const response = await fetch('/get_active_users');
+                const activeUserIds = await response.json();
+                
+                document.querySelectorAll('.profile-card').forEach(card => {
+                    const userId = parseInt(card.dataset.userId);
+                    if (activeUserIds.includes(userId)) {
+                        card.style.display = 'none';
+                    } else {
+                        card.style.display = ''; // Rétablir l'affichage par défaut
+                    }
+                });
+            } catch (error) {
+                console.error('Erreur lors de la récupération des utilisateurs actifs:', error);
+            }
+        }
+    
+        // Vérifier immédiatement et toutes les 5 secondes
+        checkActiveUsers();
+        setInterval(checkActiveUsers, 5000);
+    </script>
+{% endblock %}

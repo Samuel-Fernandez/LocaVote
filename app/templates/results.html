@@ -1,0 +1,234 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="results-container">
+        <h2 style="text-align:center;">Résultats du vote</h2>
+        
+        <!-- Podium pour les 3 premiers -->
+        {% if country_results|length >= 3 %}
+        <div class="podium-container">
+            <!-- 2ème place (Argent) -->
+            <div class="podium-item silver">
+                <div class="podium-top">
+                    <img src="{{ url_for('static', filename='countries_flag/' ~ country_results[1].country_id ~ '.png') }}" 
+                         alt="{{ country_results[1].country_name }}"
+                         class="podium-flag">
+                    <div class="podium-name">{{ country_results[1].country_name }}</div>
+                </div>
+                <div class="podium-base">
+                    <div class="podium-rank">2</div>
+                    <div class="podium-score">{{ "%.2f"|format(country_results[1].average_vote) }}</div>
+                </div>
+            </div>
+            
+            <!-- 1ère place (Or) -->
+            <div class="podium-item gold">
+                <div class="podium-top">
+                    <img src="{{ url_for('static', filename='countries_flag/' ~ country_results[0].country_id ~ '.png') }}" 
+                         alt="{{ country_results[0].country_name }}"
+                         class="podium-flag">
+                    <div class="podium-name">{{ country_results[0].country_name }}</div>
+                </div>
+                <div class="podium-base">
+                    <div class="podium-rank">1</div>
+                    <div class="podium-score">{{ "%.2f"|format(country_results[0].average_vote) }}</div>
+                </div>
+            </div>
+            
+            <!-- 3ème place (Bronze) -->
+            <div class="podium-item bronze">
+                <div class="podium-top">
+                    <img src="{{ url_for('static', filename='countries_flag/' ~ country_results[2].country_id ~ '.png') }}" 
+                         alt="{{ country_results[2].country_name }}"
+                         class="podium-flag">
+                    <div class="podium-name">{{ country_results[2].country_name }}</div>
+                </div>
+                <div class="podium-base">
+                    <div class="podium-rank">3</div>
+                    <div class="podium-score">{{ "%.2f"|format(country_results[2].average_vote) }}</div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Classement normal pour les autres pays -->
+        <div class="ranking">
+            {% for result in country_results %}
+                {% if loop.index > 3 or country_results|length < 3 %}
+                <div class="ranking-item">
+                    <span class="rank-number">{{ loop.index }}</span>
+                    <span class="country-name">
+                        <img src="{{ url_for('static', filename='countries_flag/' ~ result.country_id ~ '.png') }}" 
+                             alt="{{ result.country_name }}" 
+                             class="country-flag">
+                        {{ result.country_name }}
+                    </span>
+                    <span class="average-vote-container">
+                        <span class="average-vote">{{ "%.2f"|format(result.average_vote) }}</span>
+                    </span>
+                </div>
+                {% endif %}
+            {% endfor %}
+            
+            {% if country_results|length == 0 %}
+                <div class="no-results">
+                    <i class="fas fa-info-circle"></i>
+                    <p>Aucun vote enregistré pour le moment</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <style>
+        .results-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* Style du podium */
+        .podium-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 20px;
+            margin: 30px 0 40px;
+            height: 250px;
+        }
+        
+        .podium-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 150px;
+            position: relative;
+        }
+        
+        .podium-top {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 10px;
+            width: 100%;
+        }
+        
+        .podium-flag {
+            height: 50px;
+            width: auto;
+            margin-bottom: 8px;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .podium-name {
+            font-weight: bold;
+            text-align: center;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        
+        .podium-base {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            border-radius: 8px 8px 0 0;
+            padding: 15px 0;
+        }
+        
+        .podium-rank {
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        
+        .podium-score {
+            font-size: 20px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            margin-top: 5px;
+        }
+        
+        .gold .podium-base {
+            height: 180px;
+            background: linear-gradient(to bottom, #FFD700, #E5C100);
+        }
+        
+        .silver .podium-base {
+            height: 140px;
+            background: linear-gradient(to bottom, #C0C0C0, #A0A0A0);
+        }
+        
+        .bronze .podium-base {
+            height: 110px;
+            background: linear-gradient(to bottom, #CD7F32, #B87333);
+        }
+        
+        /* Style du classement normal */
+        .ranking {
+            margin-top: 30px;
+        }
+        
+        .ranking-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            gap: 15px;
+        }
+        
+        .rank-number {
+            font-weight: bold;
+            width: 30px;
+            text-align: center;
+            color: #495057;
+            margin-right: 10px;
+        }
+        
+        .country-name {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .country-flag {
+            height: 25px;
+            width: auto;
+            border: 1px solid #dee2e6;
+        }
+        
+        .average-vote-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 80px;
+            height: 40px;
+            background-color: #e3f2fd;
+            border-radius: 5px;
+        }
+        
+        .average-vote {
+            font-weight: bold;
+            color: #2c3e50;
+            text-align: center;
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 30px;
+            color: #6c757d;
+        }
+        
+        .no-results i {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: #6c757d;
+        }
+    </style>
+{% endblock %}

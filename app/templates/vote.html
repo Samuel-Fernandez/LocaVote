@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="vote-container">
+        <h2 class="page-title">Country Vote</h2>
+
+        <div class="country-info">
+            <div class="country-flag-container">
+                <img src="{{ url_for('static', filename='countries_flag/' ~ country_id ~ '.png') }}"
+                    alt="Country Flag" class="vote-country-flag">
+                <h3 class="country-name">{{ country_name }}</h3>
+            </div>
+        </div>
+
+        {% if vote %}
+            <div class="vote-result">
+                <div class="vote-score-container">
+                    <span class="vote-score">{{ vote.vote }}</span>
+                    <span class="vote-max">/20</span>
+                </div>
+                <p class="vote-status">You have already voted</p>
+            </div>
+        {% else %}
+            <div class="vote-control">
+                <div class="slider-container">
+                    <input type="range" id="vote_slider" min="1" max="20" value="10">
+                    <span id="slider_value">10</span>
+                </div>
+                
+
+                <button id="vote_button">
+                    <i class="fas fa-check"></i> Submit Vote
+                </button>
+
+                <p class="vote-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Your vote is irreversible!
+                </p>
+            </div>
+        {% endif %}
+    </div>
+
+    {% if not vote %}
+    <script>
+        const slider = document.getElementById('vote_slider');
+        const sliderValue = document.getElementById('slider_value');
+
+        slider.oninput = function() {
+            sliderValue.textContent = this.value;
+            
+            // Animate value change
+            sliderValue.style.transform = 'scale(1.2)';
+            setTimeout(() => {
+                sliderValue.style.transform = 'scale(1)';
+            }, 200);
+        };
+
+        document.getElementById('vote_button').addEventListener('click', function() {
+            // Confirm before submitting
+            if (confirm('Are you sure? Your vote cannot be changed later.')) {
+                const voteValue = slider.value;
+                
+                // Show loading state
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+                this.disabled = true;
+                
+                fetch("{{ url_for('main.submit_vote', country_id=country_id) }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ vote: voteValue })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Show success animation before reload
+                        const container = document.querySelector('.vote-control');
+                        container.innerHTML = `
+                            <div class="vote-success">
+                                <i class="fas fa-check-circle"></i>
+                                <p>Vote submitted successfully!</p>
+                            </div>
+                        `;
+                        
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1500);
+                    } else {
+                        alert('You have already voted.');
+                        location.reload();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error submitting vote');
+                    
+                    // Reset button
+                    this.innerHTML = '<i class="fas fa-check"></i> Submit Vote';
+                    this.disabled = false;
+                });
+            }
+        });
+    </script>
+    {% endif %}
+{% endblock %}

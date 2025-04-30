@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="user-welcome">
+        <h2 class="page-title">Welcome, {{ user_name }}</h2>
+        <a href="{{ url_for('main.logout') }}" class="logout-btn">
+            <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+    </div>
+
+    <div class="dashboard-section">
+        <h3 class="section-title">Select an action</h3>
+
+        {% if user_id == 1 %}
+        <form id="set_country_form">
+            <div class="select-wrapper">
+                <select id="country_select" name="country">
+                    {% for country in countries %}
+                        <option value="{{ country.id }}" {% if current_voting_country and country.id == current_voting_country.id %}selected{% endif %}>{{ country.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit">
+                <i class="fas fa-globe-europe"></i> Set Voting Country
+            </button>
+        </form>        
+        {% endif %}
+
+        <div class="profiles-container" id="profiles-container">
+            <div class="profile-card">
+                <a href="{{ url_for('main.vote', country_id=current_voting_country.id) if current_voting_country else '#' }}" id="vote-card">
+                    {% if current_voting_country %}
+                        <h3>Vote for {{ current_voting_country.name }}</h3>
+                        <!-- Retirer le conteneur autour de l'image et afficher directement l'image -->
+                        <img src="{{ url_for('static', filename='countries_flag/' ~ current_voting_country.id ~ '.png') }}" alt="{{ current_voting_country.name }}">
+                    {% else %}
+                        <h3>No country currently being voted</h3>
+                    {% endif %}
+                </a>
+            </div>
+            
+            <div class="profile-card">
+                <a href="{{ url_for('main.results') }}">
+                    <h3><i class="fas fa-trophy"></i> View Rankings</h3>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div id="notifications-container"></div>
+
+    <script>
+        let currentCountryId = {{ current_voting_country.id if current_voting_country else 'null' }};
+        let currentCountryName = "{{ current_voting_country.name if current_voting_country else '' }}";
+    
+        const notificationSound = new Audio("{{ url_for('static', filename='notification.mp3') }}");
+    
+        function showNotification(message, type = 'success') {
+            const notif = document.createElement("div");
+            notif.textContent = message;
+            notif.className = `notification ${type}`;
+            
+            if (type === 'success') notif.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
+            else if (type === 'error') notif.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
+            else if (type === 'warning') notif.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${message}`;
+    
+            const container = document.getElementById('notifications-container');
+            container.appendChild(notif);
+    
+            setTimeout(() => {
+                notif.style.opacity = '0';
+                notif.style.transform = 'translateX(100%)';
+                setTimeout(() => notif.remove(), 500);
+            }, 3000);
+        }
+    
+        async function updateVoteCard(countryData) {
+            const voteCard = document.getElementById("vote-card");
+    
+            if (!countryData) {
+                voteCard.innerHTML = "<h3>No country currently being voted</h3>";
+                voteCard.href = "#";
+                return;
+            }
+    
+            voteCard.innerHTML = `
+                <h3>Vote for ${countryData.name}</h3>
+                <img src="/static/countries_flag/${countryData.id}.png" alt="${countryData.name}">
+            `;
+            voteCard.href = `/vote/${countryData.id}`;
+        }
+    
+        async function checkForUpdates() {
+            try {
+                const res = await fetch("{{ url_for('main.get_current_country') }}");
+                if (!res.ok) throw new Error("Network error");
+    
+                const data = await res.json();
+    
+                if (!data || data.country_id === undefined) {
+                    if (currentCountryId !== null) {
+                        currentCountryId = null;
+                        currentCountryName = "";
+                        await updateVoteCard(null);
+                    }
+                    return;
+                }
+    
+                if (data.country_id !== currentCountryId) {
+                    const oldName = currentCountryName;
+                    currentCountryId = data.country_id;
+                    currentCountryName = data.country_name;
+                    await updateVoteCard({ id: data.country_id, name: data.country_name });
+    
+                    if (oldName) {
+                        showNotification(`Voting changed from ${oldName} to ${data.country_name}`, 'warning');
+                    } else {
+                        showNotification(`Voting country set to ${data.country_name}`, 'success');
+                    }
+    
+                    notificationSound.play().catch(err => {
+                        console.warn("Could not play sound:", err);
+                    });
+                }
+            } catch (err) {
+                console.error("Update check error:", err);
+            }
+        }
+    
+        window.addEventListener('load', () => {
+            const form = document.getElementById('set_country_form');
+            const select = document.getElementById('country_select');
+    
+            if (form && select) {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+    
+                    fetch("{{ url_for('main.set_voting_country_route') }}", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ country_id: parseInt(select.value) })
+                    })
+                    .then(res => res.ok ? res.json() : Promise.reject("Server error"))
+                    .then(data => {
+                        if (data.success) {
+                            showNotification(`Voting country set to ${data.country_name}`);
+                            updateVoteCard({ id: data.country_id, name: data.country_name });
+                            notificationSound.play().catch(err => console.warn("Sound error:", err));
+                            currentCountryId = data.country_id;
+                            currentCountryName = data.country_name;
+                        } else {
+                            showNotification("Error setting country", "error");
+                        }
+                    })
+                    .catch(err => {
+                        console.error("AJAX error:", err);
+                        showNotification("Connection error", "error");
+                    });
+                });
+            }
+    
+            // Start polling
+            setInterval(checkForUpdates, 5000);
+        });
+    </script>
+{% endblock %}
